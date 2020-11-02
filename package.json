@@ -1,0 +1,23 @@
+{
+  "name": "fullstack-part8",
+  "version": "1.0.0",
+  "description": "",
+  "main": "library-backend.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nxdf2015/fullstack-part8.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nxdf2015/fullstack-part8/issues"
+  },
+  "homepage": "https://github.com/nxdf2015/fullstack-part8#readme",
+  "dependencies": {
+    "apollo-server": "^2.19.0"
+  }
+}
