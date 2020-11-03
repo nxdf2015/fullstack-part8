@@ -8,3 +8,11 @@ export const ALL_AUTHORS = gql`query {
         bookCount
     }
 }`
+
+export const ALL_BOOKS = gql`query {
+    allBooks {
+        title
+        published
+        author
+    }
+}`
