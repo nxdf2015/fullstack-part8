@@ -1,4 +1,5 @@
 const { ApolloServer, gql } = require('apollo-server')
+const { v1 : uuid } = require('uuid')
 
 let authors = [
   {
@@ -157,7 +158,7 @@ const resolvers = {
 
   Mutation: {
     addBook: (root, arg) => {
-      const book = { ...arg, id: books.length + 1 }
+      const book = { ...arg, id: uuid() }
       if (!authors.find(author => author.name === arg.author)){
 
         authors = [...authors, { name : arg.author, }]
