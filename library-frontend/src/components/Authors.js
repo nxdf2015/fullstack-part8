@@ -16,32 +16,37 @@ const Authors = (props) => {
   }
   const authors = props.authors
   const customStyle = {
-    option:(provided ,state ) => {
-      console.log(state,provided)
-      return ({ ...provided, padding : 20 , color: 'grey'  ,backgroundColor : state.isSelected  ? 'darkblue' : state.isFocused? 'lightblue' : '' })
+    option: (provided, state) => {
+      return {
+        ...provided,
+        padding: 20,
+        color: 'grey',
+        backgroundColor: state.isSelected
+          ? 'darkblue'
+          : state.isFocused
+            ? 'lightblue'
+            : '',
+      }
     },
 
-    control:(provided ) => ({ ...provided, width : 200,margin:5 }),
-
+    control: (provided) => ({ ...provided, width: 200, margin: 5 }),
   }
   const handlerEdit = (event) => {
     event.preventDefault()
     editAuthor({
       variables: {
-        name ,
+        name,
         setBornTo: parseInt(born),
       },
     })
   }
-  const handlerSelect = event => {
-
+  const handlerSelect = (event) => {
     const name = event.value
     setName(name)
-    const author = authors.find(author => author.name === name)
+    const author = authors.find((author) => author.name === name)
     if (author.born) {
       setBorn(author.born)
-    }
-    else {
+    } else {
       setBorn('')
     }
   }
@@ -65,7 +70,14 @@ const Authors = (props) => {
         </tbody>
       </table>
       <h2>set birthyear</h2>
-      <form style={{ display:'flex' , justifyContent:'space-around',alignItems:'center' }} onSubmit={handlerEdit}>
+      <form
+        style={{
+          display: 'flex',
+          justifyContent: 'space-around',
+          alignItems: 'center',
+        }}
+        onSubmit={handlerEdit}
+      >
         <Select
           styles={customStyle}
           placeholder="select a name"
@@ -77,7 +89,7 @@ const Authors = (props) => {
           }))}
         />
 
-        <label >
+        <label>
           born
           <input
             style={{ margin: 5 }}
