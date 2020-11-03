@@ -95,18 +95,16 @@ const typeDefs = gql`
   type Author {
     name: String!
     id: String!
-    born: String 
+    born: String
+    count : Int
   }
 
-  type AuthorCount {
-    name: String
-    bookCount: Int
-  }
+   
 
   type Query {
-    bookCount: Int!
-    authorCount: Int!
-    allBooks(name: String, genre: String): [Book]
+    bookCount : Int
+    authorCount : Int
+    allBooks(author: String, genre: String): [Book]
     allAuthors: [Author]
   }
 
@@ -117,25 +115,30 @@ const typeDefs = gql`
       published: Int
       genres: [String]
     ): Book
-   
+    
+
     editAuthor(
       name : String
-      setToBorn: Int
+      setBornTo: Int
       ) : Author
     
   }
 `
 
 const resolvers = {
+  Author  :{
+    count : (root) => books.filter(book => book.author === root.name ).length
+  },
   Query: {
     bookCount: () => books.length,
 
     authorCount: () => authors.length,
+
     allBooks: (root, arg) => {
       let filteredBook = books
 
-      if (arg.name)
-        filteredBook = filteredBook.filter((book) => book.author === arg.name)
+      if (arg.author)
+        filteredBook = filteredBook.filter((book) => book.author === arg.author)
 
       if (arg.genre) {
         filteredBook = filteredBook.filter((book) =>
@@ -145,8 +148,13 @@ const resolvers = {
       return filteredBook
     },
 
-    allAuthors: () => authors
-  },
+    allAuthors: () => authors,
+
+
+    
+    },
+
+ 
   Mutation: {
     addBook: (root, arg) => {
       const book = { ...arg, id: books.length + 1 }
@@ -158,9 +166,9 @@ const resolvers = {
       return book
     },
 
-    editAuthor:( root , { name, setToBorn }) => {
+    editAuthor:( root , { name, setBornTo }) => {
 
-      authors = authors.map(author => author.name ===  name ? ({ ...author , born : setToBorn }) : author )
+      authors = authors.map(author => author.name ===  name ? ({ ...author , born : setBornTo }) : author )
 
       return authors.find(author => author.name === name )
     }
