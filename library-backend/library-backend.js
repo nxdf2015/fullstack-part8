@@ -1,4 +1,7 @@
 const { ApolloServer, gql, UserInputError } = require('apollo-server')
+const jwt = require('jsonwebtoken')
+
+const { SECRET } = require('./config')
 const { Book, Author } = require('./library-schema')
 
 const services = require('./service')
@@ -28,11 +31,22 @@ const typeDefs = gql`
     bookCount: Int
   }
 
+  type User {
+    username: String!
+    favoriteGenre: String!
+    id: ID!
+  }
+
+  type Token {
+    value: String!
+  }
+
   type Query {
     bookCount: Int
     authorCount: Int
     allAuthors: [Author]
     allBooks(author: String, genre: String): [Book]
+    me: User
   }
 
   type Mutation {
@@ -44,6 +58,10 @@ const typeDefs = gql`
     ): Book
 
     editAuthor(name: String, setBornTo: Int): Author
+
+    createUser(username: String!, favoriteGenre: String!): User
+
+    login(username: String!, password: String!): Token
   }
 `
 
@@ -72,6 +90,18 @@ const resolvers = {
         query.where('genres').in(arg.genre)
       }
       return query.populate('author').exec()
+    },
+
+    me: (root, arg, context) => {
+      const token = context.token
+      if (context.token) {
+        try {
+          return jwt.decode(token, SECRET)
+        } catch (error) {
+          throw new UserInputError('invalid token')
+        }
+      }
+      return null
     },
   },
 
@@ -113,12 +143,21 @@ const resolvers = {
         { born: setBornTo },
         { new: true }
       ),
+
+
   },
 }
 
 const server = new ApolloServer({
   typeDefs,
   resolvers,
+  context: ({ req }) => {
+    if (req && req.headers.authorization) {
+      const token = req.headers.authorization.substring(7)
+
+      return { token }
+    }
+  },
 })
 
 server.listen().then(({ url }) => {
