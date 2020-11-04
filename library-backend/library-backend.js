@@ -49,26 +49,19 @@ const typeDefs = gql`
 
 const resolvers = {
   Author: {
-    bookCount: async (root) => {
-      const count = await Book.find({
+    bookCount: (root) =>
+      Book.find({
         author: { name: root.name },
-      }).estimatedDocumentCount()
-      return count
-    },
+      }).estimatedDocumentCount(),
   },
   Query: {
-    bookCount: async () => {
-      const count = await Book.find({}).estimatedDocumentCount()
-      return count
-    },
-    authorCount: async () => {
-      const count = await Author.find({}).estimatedDocumentCount()
-      return count
-    },
+    bookCount: async () => Book.find({}).estimatedDocumentCount(),
+
+    authorCount: async () => Author.find({}).estimatedDocumentCount(),
+
     allAuthors: () => Author.find({}),
 
     allBooks: async (root, arg) => {
-      let response = []
       let query = Book.find()
 
       if (arg.author) {
@@ -78,8 +71,7 @@ const resolvers = {
       if (arg.genre) {
         query.where('genres').in(arg.genre)
       }
-      response = await query.populate('author').exec()
-      return response
+      return query.populate('author').exec()
     },
   },
 
@@ -95,34 +87,32 @@ const resolvers = {
         }
         const book = new Book({ ...arg, author: author._id })
         const bookSaved = await book.save()
-        response = await Book.findById(bookSaved._id).populate('author')
 
-      }
-      catch(error){
+        return Book.findById(bookSaved._id).populate('author')
+      } catch (error) {
         const { name, errors } = error
 
         if (errors['name']) {
-          throw new UserInputError(errors['name'].kind, { invalidsArgs: `${name} invalid name` })
+          throw new UserInputError(errors['name'].kind, {
+            invalidsArgs: `${name} invalid name`,
+          })
         }
-        if (errors['title']){
-
-          throw new UserInputError(errors['title'].kind, { invalidsArgs: `${name}: invalid title` })
+        if (errors['title']) {
+          throw new UserInputError(errors['title'].kind, {
+            invalidsArgs: `${name}: invalid title`,
+          })
         }
-
-
       }
 
       return response
     },
 
-    editAuthor: async (root, { name, setBornTo }) => {
-      const response = await Author.findOneAndUpdate(
+    editAuthor: (root, { name, setBornTo }) =>
+      Author.findOneAndUpdate(
         { name: name },
         { born: setBornTo },
         { new: true }
-      )
-      return response
-    },
+      ),
   },
 }
 
