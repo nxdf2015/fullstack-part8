@@ -2,9 +2,7 @@ const mongoose = require('mongoose')
 
 const { books, authors } = require('./data')
 const { Book, Author } = require('./library-schema')
-
-const url =
-  'mongodb+srv://admin:admin@cluster0.llwdf.mongodb.net/library?retryWrites=true&w=majority'
+const { MONGO_URI } = require('./config')
 
 const options = {
   useNewUrlParser: true,
@@ -36,6 +34,6 @@ const reset = async () => {
   }
 }
 
-const connect = async () => await mongoose.connect(url, options)
+const connect = async () => await mongoose.connect(MONGO_URI, options)
 
 module.exports = { setData, reset, connect }
