@@ -76,7 +76,7 @@ const resolvers = {
         query.where('author').eq(author.id)
       }
       if (arg.genre) {
-        await query.where('genres').in(arg.genre)
+        query.where('genres').in(arg.genre)
       }
       response = await query.populate('author').exec()
       return response
