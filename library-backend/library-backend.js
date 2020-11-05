@@ -1,7 +1,7 @@
 const { ApolloServer, gql, UserInputError } = require('apollo-server')
 const jwt = require('jsonwebtoken')
 
-const { SECRET, PASSWORD } = require('./config')
+const { SECRET } = require('./config')
 const { Book, Author, User } = require('./library-schema')
 
 const services = require('./service')
@@ -94,7 +94,7 @@ const resolvers = {
 
     me: async (root, arg, context) => {
 
-      const { username , id } = context.currentUser
+      const { id } = context.currentUser
       const user = await User.findOne({ _id : id })
       return user
     },
