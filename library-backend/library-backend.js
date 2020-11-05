@@ -92,12 +92,7 @@ const resolvers = {
       return query.populate('author').exec()
     },
 
-    me: async (root, arg, context) => {
-
-      const { id } = context.currentUser
-      const user = await User.findOne({ _id : id })
-      return user
-    },
+    me: async (root, arg, context) => context.currentUser,
   },
 
   Mutation: {
@@ -165,8 +160,8 @@ const server = new ApolloServer({
   context: ({ req }) => {
     if (req && req.headers.authorization) {
       const token = req.headers.authorization.substring(7)
-      const currentUser = jwt.decode(token, SECRET)
-      console.log(currentUser)
+      const currentUser = jwt.verify(token, SECRET)
+
       return { currentUser }
     }
   },
