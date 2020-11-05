@@ -1,8 +1,8 @@
 const { ApolloServer, gql, UserInputError } = require('apollo-server')
 const jwt = require('jsonwebtoken')
 
-const { SECRET } = require('./config')
-const { Book, Author } = require('./library-schema')
+const { SECRET, PASSWORD } = require('./config')
+const { Book, Author, User } = require('./library-schema')
 
 const services = require('./service')
 
@@ -92,21 +92,17 @@ const resolvers = {
       return query.populate('author').exec()
     },
 
-    me: (root, arg, context) => {
-      const token = context.token
-      if (context.token) {
-        try {
-          return jwt.decode(token, SECRET)
-        } catch (error) {
-          throw new UserInputError('invalid token')
-        }
-      }
-      return null
+    me: async (root, arg, context) => {
+
+      const { username , id } = context.currentUser
+      const user = await User.findOne({ _id : id })
+      return user
     },
   },
 
   Mutation: {
-    addBook: async (root, arg) => {
+    addBook: async (root, arg, context) => {
+      if (!context.currentUser) return null
       let author
       let response = null
 
@@ -137,14 +133,29 @@ const resolvers = {
       return response
     },
 
-    editAuthor: (root, { name, setBornTo }) =>
-      Author.findOneAndUpdate(
-        { name: name },
-        { born: setBornTo },
-        { new: true }
-      ),
+    editAuthor: (root, { name, setBornTo }, context) =>
+      context.currentUser
+        ? Author.findOneAndUpdate(
+          { name: name },
+          { born: setBornTo },
+          { new: true }
+        )
+        : null,
 
+    createUser: (root, { username, favoriteGenre }) =>
+      new User({ username, favoriteGenre }).save().catch((error) => {
+        throw new UserInputError(error.name)
+      }),
 
+    login: async (root, { username }) => {
+      const user = await User.findOne({ username: username })
+      let token
+      if (user) {
+        console.log(SECRET)
+        token = jwt.sign({ username, id: user._id }, SECRET)
+      }
+      return { value: token }
+    },
   },
 }
 
@@ -154,8 +165,9 @@ const server = new ApolloServer({
   context: ({ req }) => {
     if (req && req.headers.authorization) {
       const token = req.headers.authorization.substring(7)
-
-      return { token }
+      const currentUser = jwt.decode(token, SECRET)
+      console.log(currentUser)
+      return { currentUser }
     }
   },
 })

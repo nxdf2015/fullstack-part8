@@ -33,11 +33,25 @@ const schemaAuthor = new mongoose.Schema({
   },
 })
 
+
+const schemaUser = new mongoose.Schema({
+  username:{
+    type:String,
+    required:true
+  },
+
+  favoriteGenre:{
+    type:String,
+    required:true
+  }
+})
+
 schemaAuthor.plugin(uniquePlugin)
 schemaBook.plugin(uniquePlugin)
+schemaUser.plugin(uniquePlugin)
 
 const Book = mongoose.model('Book', schemaBook)
 const Author= mongoose.model('Author', schemaAuthor)
+const User= mongoose.model('User',schemaUser)
 
-
-module.exports={ Book, Author }
+module.exports={ Book, Author ,User }
