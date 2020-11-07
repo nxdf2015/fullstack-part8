@@ -1,5 +1,5 @@
 const mongoose = require('mongoose')
-
+const  { UserInputError } = require('apollo-server')
 const { books, authors } = require('./data')
 const { Book, Author } = require('./library-schema')
 const { MONGO_URI } = require('./config')
@@ -36,4 +36,35 @@ const reset = async () => {
 
 const connect = async () => await mongoose.connect(MONGO_URI, options)
 
-module.exports = { setData, reset, connect }
+const addBook = async (arg ) => {
+  const session = await mongoose.startSession()
+  session.startTransaction()
+
+  try {
+    let  author = await Author.findOne({ name: arg.author } )
+
+    if (!author) {
+      author = await new Author({ name: arg.author },{ session }).save()
+    }
+    const book = new Book({ ...arg, author: author._id },{ session })
+    const bookSaved = await book.save()
+    session.endSession()
+    return Book.findById(bookSaved._id).populate('author')
+  } catch (error) {
+    session.abortTransaction()
+    const { name, errors } = error
+
+    if (errors['name']) {
+      throw new UserInputError(`name : ${errors['name'].kind}`, {
+        invalidsArgs: `${name} invalid name`,
+      })
+    }
+    if (errors['title']) {
+      throw new UserInputError(`title : ${errors['title'].kind}`, {
+        invalidsArgs: `${name}: invalid title`,
+      })
+    }
+  }
+}
+
+module.exports = { setData, reset, connect ,addBook }

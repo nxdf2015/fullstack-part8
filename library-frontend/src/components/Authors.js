@@ -4,11 +4,13 @@ import { useMutation } from '@apollo/client'
 import { EDIT_AUTHOR } from '../mutation'
 import { ALL_AUTHORS } from '../query'
 
+
+
 const Authors = (props) => {
   const [name, setName] = useState('')
   const [born, setBorn] = useState('')
   const [editAuthor] = useMutation(EDIT_AUTHOR, {
-    refetchQueries: [{ query: ALL_AUTHORS }],
+    refetchQueries: [{ query: ALL_AUTHORS }],onError: error => props.notify(error.name,error.message)
   })
 
   if (!props.show) {
@@ -36,7 +38,7 @@ const Authors = (props) => {
     editAuthor({
       variables: {
         name,
-        setBornTo: parseInt(born),
+        setBornTo: parseInt(born)
       },
     })
   }

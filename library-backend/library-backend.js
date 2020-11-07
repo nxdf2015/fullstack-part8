@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken')
 const { SECRET } = require('./config')
 const { Book, Author, User } = require('./library-schema')
 
+
 const services = require('./service')
 
 services.connect()
@@ -45,8 +46,10 @@ const typeDefs = gql`
     bookCount: Int
     authorCount: Int
     allAuthors: [Author]
+    allGenres: [String]
     allBooks(author: String, genre: String): [Book]
     me: User
+    
   }
 
   type Mutation {
@@ -67,13 +70,11 @@ const typeDefs = gql`
 
 const resolvers = {
   Author: {
-    bookCount: (root) =>
-      Book.find({
-        author: { name: root.name },
-      }).estimatedDocumentCount(),
+    bookCount:   (root) =>   Book.find({ author: root._id }).countDocuments()
+
   },
   Query: {
-    bookCount: async () => Book.find({}).estimatedDocumentCount(),
+    bookCount: async () => Book.find().estimatedDocumentCount(),
 
     authorCount: async () => Author.find({}).estimatedDocumentCount(),
 
@@ -93,49 +94,33 @@ const resolvers = {
     },
 
     me: async (root, arg, context) => context.currentUser,
+    allGenres:() =>  Book.find({} ,{ genres : 1 } )
+      .then(data => data.reduce((acc,{ genres }) => [...acc,...genres  ] , [] ))
+      .then(data => [...new Set(data)])
   },
 
   Mutation: {
     addBook: async (root, arg, context) => {
       if (!context.currentUser) return null
-      let author
-      let response = null
 
-      try {
-        author = await Author.findOne({ name: arg.author })
-        if (!author) {
-          author = await new Author({ name: arg.author }).save()
-        }
-        const book = new Book({ ...arg, author: author._id })
-        const bookSaved = await book.save()
 
-        return Book.findById(bookSaved._id).populate('author')
-      } catch (error) {
-        const { name, errors } = error
+      return services.addBook(arg)
 
-        if (errors['name']) {
-          throw new UserInputError(errors['name'].kind, {
-            invalidsArgs: `${name} invalid name`,
-          })
-        }
-        if (errors['title']) {
-          throw new UserInputError(errors['title'].kind, {
-            invalidsArgs: `${name}: invalid title`,
-          })
-        }
-      }
 
-      return response
     },
 
-    editAuthor: (root, { name, setBornTo }, context) =>
-      context.currentUser
-        ? Author.findOneAndUpdate(
+    editAuthor: (root, { name, setBornTo }, context) => {
+
+      if (context.currentUser){
+        return Author.findOneAndUpdate(
           { name: name },
           { born: setBornTo },
-          { new: true }
-        )
-        : null,
+          { new: true })
+      }
+      else  {
+        throw new UserInputError('not logged',{ message : 'forbiden : you must logged in' })
+      }
+    },
 
     createUser: (root, { username, favoriteGenre }) =>
       new User({ username, favoriteGenre }).save().catch((error) => {
@@ -146,7 +131,6 @@ const resolvers = {
       const user = await User.findOne({ username: username })
       let token
       if (user) {
-        console.log(SECRET)
         token = jwt.sign({ username, id: user._id }, SECRET)
       }
       return { value: token }
@@ -158,12 +142,13 @@ const server = new ApolloServer({
   typeDefs,
   resolvers,
   context: ({ req }) => {
+    let currentUser = null
     if (req && req.headers.authorization) {
       const token = req.headers.authorization.substring(7)
-      const currentUser = jwt.verify(token, SECRET)
+      currentUser = jwt.verify(token, SECRET)
 
-      return { currentUser }
     }
+    return { currentUser }
   },
 })
 
