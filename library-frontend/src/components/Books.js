@@ -5,7 +5,7 @@ import { ALL_BOOKS ,GENRES ,ALL_BOOKS_BY_GENRES  } from '../query'
 
 import  Table from './Table'
 const Books = (props) => {
-  const query = useQuery(ALL_BOOKS)
+  let  query = useQuery(ALL_BOOKS)
   const genres=useQuery(GENRES)
   const [data ,setData] = useState([])
 
@@ -51,8 +51,9 @@ const Books = (props) => {
 
       </div>
       <button onClick={() => {
-        query.refetch()
-        setData(query.data.allBooks)}}>all books</button>
+        query.refetch().then(response => { if (! response.loading)setData(response.data.allBooks)})
+      }
+      }>all books</button>
     </div>
   )
 }
