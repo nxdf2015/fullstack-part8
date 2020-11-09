@@ -28,7 +28,7 @@ const typeDefs = gql`
   type Author {
     name: String!
     id: String!
-    born: String
+    born:Int
     bookCount: Int
   }
 
@@ -60,7 +60,7 @@ const typeDefs = gql`
       genres: [String]
     ): Book
 
-    editAuthor(name: String, setBornTo: Int): Author
+    editAuthor(name: String!, setBornTo: Int!): Author
 
     createUser(username: String!, favoriteGenre: String!): User
 
@@ -93,7 +93,15 @@ const resolvers = {
       return query.populate('author').exec()
     },
 
-    me: async (root, arg, context) => context.currentUser,
+    me: async (root, arg, context) => {
+      const user = context.currentUser
+      console.log(user)
+      if (!user){
+        throw new UserInputError('not logged',{ message:'you must logged' })
+      }
+      return user
+    },
+
     allGenres:() =>  Book.find({} ,{ genres : 1 } )
       .then(data => data.reduce((acc,{ genres }) => [...acc,...genres  ] , [] ))
       .then(data => [...new Set(data)])
@@ -101,26 +109,28 @@ const resolvers = {
 
   Mutation: {
     addBook: async (root, arg, context) => {
-      if (!context.currentUser) return null
+      if ( context.currentUser) {
+        return services.addBook(arg)}
 
-
-      return services.addBook(arg)
+      else {
+        throw new UserInputError('not logged',{ message : 'forbiden : you must logged in to add a book'  })
+      }
 
 
     },
 
-    editAuthor: (root, { name, setBornTo }, context) => {
-
+    editAuthor:  (root, { name, setBornTo }, context) =>  {
       if (context.currentUser){
-        return Author.findOneAndUpdate(
+        Author.findOneAndUpdate(
           { name: name },
           { born: setBornTo },
           { new: true })
       }
       else  {
-        throw new UserInputError('not logged',{ message : 'forbiden : you must logged in' })
+        throw new UserInputError('not logged',{ message : 'forbiden : you must logged in to update data' })
       }
-    },
+    }
+    ,
 
     createUser: (root, { username, favoriteGenre }) =>
       new User({ username, favoriteGenre }).save().catch((error) => {
@@ -129,9 +139,10 @@ const resolvers = {
 
     login: async (root, { username }) => {
       const user = await User.findOne({ username: username })
+
       let token
       if (user) {
-        token = jwt.sign({ username, id: user._id }, SECRET)
+        token = jwt.sign( { username:user.username,favoriteGenre:user.favoriteGenre }, SECRET)
       }
       return { value: token }
     },
@@ -148,7 +159,7 @@ const server = new ApolloServer({
       currentUser = jwt.verify(token, SECRET)
 
     }
-    return { currentUser }
+    return { currentUser  }
   },
 })
 

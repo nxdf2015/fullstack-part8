@@ -37,21 +37,21 @@ const reset = async () => {
 const connect = async () => await mongoose.connect(MONGO_URI, options)
 
 const addBook = async (arg ) => {
-  const session = await mongoose.startSession()
-  session.startTransaction()
+  // const session = await mongoose.startSession()
+  // session.startTransaction()
 
   try {
     let  author = await Author.findOne({ name: arg.author } )
 
     if (!author) {
-      author = await new Author({ name: arg.author },{ session }).save()
+      author = await new Author({ name: arg.author } ).save()
     }
-    const book = new Book({ ...arg, author: author._id },{ session })
+    const book = new Book({ ...arg, author: author._id } )
     const bookSaved = await book.save()
-    session.endSession()
+    // session.endSession()
     return Book.findById(bookSaved._id).populate('author')
   } catch (error) {
-    session.abortTransaction()
+    //  session.abortTransaction()
     const { name, errors } = error
 
     if (errors['name']) {
