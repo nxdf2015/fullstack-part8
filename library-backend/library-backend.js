@@ -95,7 +95,7 @@ const resolvers = {
 
     me: async (root, arg, context) => {
       const user = context.currentUser
-      console.log(user)
+
       if (!user){
         throw new UserInputError('not logged',{ message:'you must logged' })
       }

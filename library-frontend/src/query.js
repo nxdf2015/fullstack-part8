@@ -31,3 +31,16 @@ export const ME=gql`query{
     favoriteGenre
 }
 }`
+
+export const ALL_BOOKS_BY_GENRES=gql`query allbooksByGenres($genre:String){
+    allBooks(genre:$genre){
+        title
+        genres
+        published
+        author {
+            name
+            born
+           bookCount
+        }
+    }
+}`

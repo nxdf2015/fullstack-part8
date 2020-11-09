@@ -1,16 +1,39 @@
-import React,{ useState } from 'react'
-import { useQuery } from '@apollo/client'
+import React,{ useEffect, useState } from 'react'
+import { useQuery,useLazyQuery } from '@apollo/client'
 
-import { ALL_BOOKS ,GENRES   } from '../query'
+import { ALL_BOOKS ,GENRES ,ALL_BOOKS_BY_GENRES  } from '../query'
 
-import FilterTable from './Filter'
+import  Table from './Table'
 const Books = (props) => {
   const query = useQuery(ALL_BOOKS)
   const genres=useQuery(GENRES)
+  const [data ,setData] = useState([])
 
-  const [genre,setGenre] = useState('')
-  if (!props.show) {
+  const [ filterByGenre , resultFilter ] = useLazyQuery(ALL_BOOKS_BY_GENRES)
+
+  useEffect(() => {
+    if (!query.loading && query.data)
+      setData(query.data.allBooks)
+  },[query.loading])
+
+
+
+  useEffect(() => {
+    if (resultFilter.called && !resultFilter.loading){
+      setData(resultFilter.data.allBooks)
+    }
+
+  },[resultFilter])
+
+  if (!props.show || query.loading ) {
     return null
+  }
+
+  const handlerFilter = (value) => {
+    if (resultFilter.called)
+      resultFilter.refetch()
+    filterByGenre({ variables:{ genre : value } })
+
   }
 
 
@@ -19,15 +42,17 @@ const Books = (props) => {
 
       <h2>books</h2>
       {!query.loading &&
-     <FilterTable filter={genre} data={query.data.allBooks}/>
+     <Table  data={data}/>
 
 
       }
       <div style={{ display:'flex' }}>
-        { !genres.loading && genres.data.allGenres.map((value,i) => <button key={i} onClick={() => setGenre(value)}>{value}</button> )}
+        { !genres.loading && genres.data.allGenres.map((value,i) => <button key={i} onClick={() => handlerFilter(value)}>{value}</button> )}
 
       </div>
-      <button onClick={() => setGenre('')}>reset filter</button>
+      <button onClick={() => {
+        query.refetch()
+        setData(query.data.allBooks)}}>all books</button>
     </div>
   )
 }
