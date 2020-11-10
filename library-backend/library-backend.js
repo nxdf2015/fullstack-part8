@@ -77,10 +77,10 @@ const typeDefs = gql`
 `
 
 const resolvers = {
-  Author: {
-    bookCount:   (root) =>   Book.find({ author: root._id }).countDocuments()
+  // Author: {
+  //   bookCount:   (root) =>   Book.find({ author: root._id }).countDocuments()
 
-  },
+  // },
   Query: {
     bookCount: async () => Book.find().estimatedDocumentCount(),
 

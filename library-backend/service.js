@@ -12,7 +12,7 @@ const options = {
 }
 
 const setData = async () => {
-  const data = authors.map(({ name, born }) => new Author({ name, born }))
+  const data = authors.map(({ name, born }) => new Author({ name, born,bookCount: 1 }))
   const savedAuthors = await Promise.all(data.map((d) => d.save()))
 
   const booksDB = books.map((book) => {
@@ -41,11 +41,11 @@ const addBook = async (arg ) => {
   session.startTransaction()
 
   try {
-    let  author = await Author.findOne({ name: arg.author } )
+    let  author = await Author.findOneAndUpdate({ name: arg.author } ,{ $inc : { bookCount : 1 } },{ new: true, upsert:true } )
 
-    if (!author) {
-      author = await new Author({ name: arg.author } ).save()
-    }
+    // if (!author) {
+    //   author = await new Author({ name: arg.author } ).save()
+    // }
     const book = new Book({ ...arg, author: author._id } )
     const bookSaved = await book.save()
     session.endSession()

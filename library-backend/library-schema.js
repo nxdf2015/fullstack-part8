@@ -28,6 +28,9 @@ const schemaAuthor = new mongoose.Schema({
     unique: true,
     minlength: 4
   },
+  bookCount: {
+    type:Number
+  },
   born: {
     type: Number,
   },
