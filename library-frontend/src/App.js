@@ -1,5 +1,9 @@
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState  } from 'react'
+import { useSubscription ,useApolloClient } from '@apollo/client'
+
+import { BOOK_ADDED } from './subscription'
+import { ALL_BOOKS } from './query'
 import Authors from './components/Authors'
 import Books from './components/Books'
 import NewBook from './components/NewBook'
@@ -13,7 +17,26 @@ const App = () => {
   const [isLogged , setLogged] = useState(false)
   const [ message , setMessage] = useState('')
   const [visible,setVisible] = useState(false)
+  const client = useApolloClient()
 
+  useSubscription(BOOK_ADDED,{
+    onSubscriptionData : ({ subscriptionData }) => {
+
+      const data = subscriptionData.data.bookAdded
+      notify({ message : `a new book ${data.title } by ${data.author.name} added ` })
+      const dataInStore = client.readQuery({ query : ALL_BOOKS })
+      if (!dataInStore.allBooks.find(book => book.title === data.title)){
+        client.writeQuery({ query : ALL_BOOKS,
+          data : {
+            ...dataInStore,
+            allBooks:[
+              ...dataInStore.allBooks,
+              data
+            ]
+          } })
+      }
+    }
+  })
   useEffect(() => {
     if (localStorage.getItem('token'))
       setLogged(true)
@@ -31,8 +54,8 @@ const App = () => {
     }
   }
 
-  const notify = error => {
-    setMessage(error.message)
+  const notify = data => {
+    setMessage(data.message)
     setVisible(true)
   }
 

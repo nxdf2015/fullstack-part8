@@ -17,7 +17,7 @@ const NewBook = (props) => {
       const dataInStore = store.readQuery(ALL_BOOKS)
       store.writeQuery({
         query: ALL_BOOKS,
-        data: { ... dataInStore,
+        data: { ...dataInStore,
           allBooks : [
             ...dataInStore.allBooks,
             response.data.addBook

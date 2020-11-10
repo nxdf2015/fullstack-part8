@@ -10,7 +10,7 @@ const Notification = ({ message ,visible, setVisible }) => {
     setTimeout(() => setVisible(false),2000)
 
   }
-  return  visible && <div>{message}</div>
+  return  visible && <div style={{ padding: '5px' ,border:'2px solid ',background:'lightblue' }}>{message}</div>
 }
 
 export default Notification
