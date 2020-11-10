@@ -1,4 +1,4 @@
-const { ApolloServer, gql, UserInputError } = require('apollo-server')
+const { ApolloServer, gql, UserInputError ,PubSub } = require('apollo-server')
 const jwt = require('jsonwebtoken')
 
 const { SECRET } = require('./config')
@@ -15,6 +15,8 @@ const action = async () => {
 }
 
 action()
+
+const pubsub = new PubSub()
 
 const typeDefs = gql`
   type Book {
@@ -66,6 +68,12 @@ const typeDefs = gql`
 
     login(username: String!, password: String!): Token
   }
+
+  type Subscription{
+    bookAdded : Book
+  }
+
+
 `
 
 const resolvers = {
@@ -110,8 +118,10 @@ const resolvers = {
   Mutation: {
     addBook: async (root, arg, context) => {
       if ( context.currentUser) {
-        return services.addBook(arg)}
-
+        const newBook =  services.addBook(arg)
+        pubsub.publish('BOOK_ADDED',{ bookAdded : newBook })
+        return newBook
+      }
       else {
         throw new UserInputError('not logged',{ message : 'forbiden : you must logged in to add a book'  })
       }
@@ -147,6 +157,14 @@ const resolvers = {
       return { value: token }
     },
   },
+
+  Subscription : {
+    bookAdded : {
+      subscribe: () => {
+
+        return pubsub.asyncIterator(['BOOK_ADDED'])}
+    }
+  }
 }
 
 const server = new ApolloServer({
@@ -163,6 +181,7 @@ const server = new ApolloServer({
   },
 })
 
-server.listen().then(({ url }) => {
+server.listen().then(({ url,subscriptionsUrl }) => {
   console.log(`Server ready at ${url}`)
+  console.log(`Subscription  ready at ${subscriptionsUrl}`)
 })
